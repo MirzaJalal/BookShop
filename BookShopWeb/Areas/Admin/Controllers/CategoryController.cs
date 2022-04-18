@@ -1,21 +1,21 @@
-﻿using BookShopWeb.Data;
-using BookShopWeb.Models;
+﻿using BookShop.DataAccess;
+using BookShop.DataAccess.Repository.IRepository;
+using BookShop.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookShopWeb.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IUnitofWork _unitOfWork;
 
-        public CategoryController(ApplicationDbContext db)
+        public CategoryController(IUnitofWork unitOfWork)
         {
-            _db = db;
+            _unitOfWork = unitOfWork;
         }
-
         public IActionResult Index()
         {
-            var objCategoryList = _db.Categories.ToList();
+            var objCategoryList = _unitOfWork.Category.GetAll();
 
             return View(objCategoryList);
         }
@@ -42,8 +42,8 @@ namespace BookShopWeb.Controllers
 
             if (ModelState.IsValid)
             {
-                _db.Categories.Add(category);
-                _db.SaveChanges();
+                _unitOfWork.Category.Add(category);
+                _unitOfWork.Save();
                 TempData["success"] = "Category Created Successfully!";
                 return RedirectToAction("Index");
             }
@@ -57,11 +57,11 @@ namespace BookShopWeb.Controllers
             {
                 return NotFound();
             }
-            var categoryFromDb = _db.Categories.Find(id);
-            //var categoryFromDb = _db.Categories.FirstOrDefault(c => c.Id == id);
+            //var categoryFromDb = _db.Categories.Find(id);
+            var categoryFromDb = _unitOfWork.Category.GetFirstOrDefault(c => c.Id == id);
             //var categoryFromDb = _db.Categories.SingleOrDefault(c => c.Id == id);
 
-            if(categoryFromDb == null)
+            if (categoryFromDb == null)
             {
                 return NotFound();
             }
@@ -79,9 +79,9 @@ namespace BookShopWeb.Controllers
 
             if (ModelState.IsValid)
             {
-                _db.Categories.Update(category);
+                _unitOfWork.Category.Update(category);
                 TempData["success"] = "Category Updated Successfully!";
-                _db.SaveChanges();
+                _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
             return View(category);
@@ -94,27 +94,27 @@ namespace BookShopWeb.Controllers
             {
                 return NotFound();
             }
-            var categoryFromDb = _db.Categories.Find(id);
+            var categoryFromDbFirst = _unitOfWork.Category.GetFirstOrDefault(u=>u.Id==id);
 
-            if (categoryFromDb == null)
+            if (categoryFromDbFirst == null)
             {
                 return NotFound();
             }
-            return View(categoryFromDb);
+            return View(categoryFromDbFirst);
         }
 
         [HttpPost]
         public IActionResult DeletePost(int id)
         {
-            var obj = _db.Categories.Find(id);
+            var obj = _unitOfWork.Category.GetFirstOrDefault(u => u.Id == id);
             if (obj == null)
             {
                 return NotFound();
             }
 
-                _db.Categories.Remove(obj);
+            _unitOfWork.Category.Remove(obj);
             TempData["delete"] = "Category Deleted Successfully!";
-            _db.SaveChanges();
+            _unitOfWork.Save();
                 return RedirectToAction("Index");
         }
     }
