@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BookShopWeb.Controllers
 {
+    [Area("Admin")]
     public class ProductController : Controller
     {
         private readonly IUnitofWork _unitOfWork;
         private readonly IWebHostEnvironment _he;
-
 
         public ProductController(IUnitofWork unitOfWork, IWebHostEnvironment he)
         {
