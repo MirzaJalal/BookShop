@@ -2,13 +2,22 @@ using BookShop.DataAccess;
 using BookShop.DataAccess.Repository;
 using BookShop.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+//var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection");;
+
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(connectionString));;
+
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(
                                                     builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDefaultIdentity<IdentityUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddScoped<IUnitofWork, UnitofWork>();
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation(); //added manually
 //builder.Services.AddDbContext<
@@ -25,8 +34,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+//app.usestaticfiles(new staticfileoptions
+//{
+//    serveunknownfiletypes = true
+//});
 
 app.UseRouting();
+app.UseAuthentication(); ;
 
 app.UseAuthorization();
 
@@ -35,3 +49,4 @@ app.MapControllerRoute(
     pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+

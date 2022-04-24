@@ -17,24 +17,39 @@ namespace BookShop.DataAccess.Repository
         public Repository(ApplicationDbContext db)
         {
             _db = db;
+            //_db.Products.Include(u => u.Category).Include(u=>u.CoverType);
             this.dbSet = _db.Set<T>();
         }
         public void Add(T entity)
         {
             dbSet.Add(entity); //(dbSet) simplifies (_db.Categories).add()
         }
-
-        public IEnumerable<T> GetAll()
+        //includeProp - "Category,CoverType"
+        public IEnumerable<T> GetAll(string? includeProperties = null)
         {
             IQueryable<T> query = dbSet; //as we will make query
+            if(includeProperties != null)
+            {
+                foreach(var includeProp in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProp);
+                }
+            }
             return query.ToList();
         }
 
-        public T GetFirstOrDefault(Expression<Func<T, bool>> filer)
+        public T GetFirstOrDefault(Expression<Func<T, bool>> filer, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
 
             query = query.Where(filer);
+            if (includeProperties != null)
+            {
+                foreach (var includeProp in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProp);
+                }
+            }
 
             return query.FirstOrDefault();
         }
