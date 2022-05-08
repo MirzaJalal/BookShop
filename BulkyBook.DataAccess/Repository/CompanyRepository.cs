@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace BookShop.DataAccess.Repository
 {
-    public class CompanyRepository : Repository<Company>, ICompanyRepository
+    public class CategoryRepository : Repository<Category>, ICategoryRepository
     {
         private ApplicationDbContext _db;
-        public CompanyRepository(ApplicationDbContext db) : base(db)
+        public CategoryRepository(ApplicationDbContext db) : base(db)
         {
             _db = db;
         }
@@ -20,9 +20,9 @@ namespace BookShop.DataAccess.Repository
             _db.SaveChanges();
         }
 
-        public void Update(Company obj)
+        public void Update(Category obj)
         {
-            _db.Companies.Update(obj);
+            _db.Categories.Update(obj);
         }
     }
 }

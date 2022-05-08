@@ -17,7 +17,7 @@ namespace BookShop.DataAccess.Repository
         public Repository(ApplicationDbContext db)
         {
             _db = db;
-            //_db.Products.Include(u => u.Category).Include(u=>u.CoverType);
+            //_db.ShoppingCarts.Include(u => u.Product).Include(u=>u.CoverType);
             this.dbSet = _db.Set<T>();
         }
         public void Add(T entity)
@@ -25,10 +25,14 @@ namespace BookShop.DataAccess.Repository
             dbSet.Add(entity); //(dbSet) simplifies (_db.Categories).add()
         }
         //includeProp - "Category,CoverType"
-        public IEnumerable<T> GetAll(string? includeProperties = null)
+        public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter=null, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet; //as we will make query
-            if(includeProperties != null)
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+            if (includeProperties != null)
             {
                 foreach(var includeProp in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -38,11 +42,11 @@ namespace BookShop.DataAccess.Repository
             return query.ToList();
         }
 
-        public T GetFirstOrDefault(Expression<Func<T, bool>> filer, string? includeProperties = null)
+        public T GetFirstOrDefault(Expression<Func<T, bool>> filter, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
 
-            query = query.Where(filer);
+            query = query.Where(filter);
             if (includeProperties != null)
             {
                 foreach (var includeProp in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))

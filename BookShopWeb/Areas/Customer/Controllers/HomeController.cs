@@ -1,8 +1,10 @@
 ﻿using BookShop.DataAccess.Repository.IRepository;
 using BookShop.Models;
 using BookShop.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace BookShopWeb.Controllers
 {
@@ -23,16 +25,41 @@ namespace BookShopWeb.Controllers
             return View(productList);
         }
 
-        public IActionResult Details(int id)
+        public IActionResult Details(int productId)
         {
             ShoppingCart cartObj = new()
             {
                 Count = 1,
-                Product = _unitofWork.Product.GetFirstOrDefault(u=>u.Id==id)
+                ProductId = productId,
+                Product = _unitofWork.Product.GetFirstOrDefault(u=>u.Id== productId, "Category,CoverType"),
             };
             return View(cartObj);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public IActionResult Details(ShoppingCart shoppingCart)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            shoppingCart.ApplicationUserId = claim.Value;
+            //
 
+            ShoppingCart cartFromDb = _unitofWork.ShoppingCart.GetFirstOrDefault(
+                u => u.ApplicationUserId == claim.Value && u.ProductId == shoppingCart.ProductId);
+            if(cartFromDb == null)
+            {
+                _unitofWork.ShoppingCart.Add(shoppingCart);
+            }
+            else
+            {
+                _unitofWork.ShoppingCart.IncrementCount(cartFromDb, shoppingCart.Count);
+            }
+            //
+            _unitofWork.ShoppingCart.Add(shoppingCart);
+            _unitofWork.Save();
+            return RedirectToAction(nameof(Index));
+        }
         public IActionResult Privacy()
         {
             return View();
