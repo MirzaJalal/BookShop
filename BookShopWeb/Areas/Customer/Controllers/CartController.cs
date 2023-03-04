@@ -5,6 +5,7 @@ using BookShop.Models.ViewModels;
 using BookShop.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Stripe.Checkout;
 using System.Security.Claims;
 
@@ -142,9 +143,11 @@ namespace BookShopWeb.Areas.Customer.Controllers
 
             }
 
+            // making session for payment
             var service = new SessionService();
             Session session = service.Create(options);
-
+            _unitofWork.OrderHeader.UpdateStripePaymentID(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            _unitofWork.Save();
             Response.Headers.Add("Location", session.Url);
             return new StatusCodeResult(303);
 
@@ -154,7 +157,27 @@ namespace BookShopWeb.Areas.Customer.Controllers
             //return RedirectToAction("Index","Home");
         }
 
-        
+        public IActionResult OrderConfirmation(int id)
+        {
+            OrderHeader orderHeader = _unitofWork.OrderHeader.GetFirstOrDefault(u => u.Id == id);
+            var service = new SessionService();
+            Session session = service.Get(orderHeader.SessionId);
+
+            // check the status of payment
+            if(session.PaymentStatus.ToLower() == "paid")
+            {
+                _unitofWork.OrderHeader.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
+                _unitofWork.Save();
+            }
+
+            List<ShoppingCart> shoppingCarts = _unitofWork.ShoppingCart
+                .GetAll(u=>u.ApplicationUserId ==orderHeader.ApplicationUserId)
+                .ToList();
+            _unitofWork.ShoppingCart.RemoveRange(shoppingCarts);
+            _unitofWork.Save();
+            return View(id);
+
+        }
         public IActionResult Plus(int cartId)
         {
             var cart = _unitofWork.ShoppingCart.GetFirstOrDefault(u => u.Id == cartId);
